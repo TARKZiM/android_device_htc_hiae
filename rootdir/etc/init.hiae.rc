@@ -50,7 +50,7 @@ on init
 on fs
     wait /dev/block/platform/soc.0/${ro.boot.bootdevice}
     symlink /dev/block/platform/soc.0/${ro.boot.bootdevice} /dev/block/bootdevice
-    mount_all fstab.hiae
+    mount_all /vendor/etc/fstab.hiae
 
 on post-fs-data
     # Create directory for tombstone
