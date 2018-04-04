@@ -15,3 +15,8 @@
 
 PRODUCT_MAKEFILES := \
     $(LOCAL_DIR)/lineage_hiae.mk
+
+COMMON_LUNCH_CHOICES := \
+    lineage_hiae-user \
+    lineage_hiae-userdebug \
+    lineage_hiae-eng
