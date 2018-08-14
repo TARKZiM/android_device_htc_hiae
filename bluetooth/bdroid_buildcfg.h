@@ -21,7 +21,7 @@
 
 #define BTM_DEF_LOCAL_NAME   "HTC One A9"
 
-#define BLE_VND_INCLUDED TRUE
+#define BLE_VND_INCLUDED FALSE
 #define BTA_DISABLE_DELAY 1000 /* in milliseconds */
 
 #define BTM_WBS_INCLUDED TRUE
