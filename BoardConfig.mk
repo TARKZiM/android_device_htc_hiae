@@ -130,6 +130,18 @@ TARGET_FS_CONFIG_GEN := device/htc/hiae/config.fs
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
 
+BOARD_ROOT_EXTRA_FOLDERS := \
+    carrier \
+    firmware/adsp \
+    firmware/radio \
+    firmware/venus \
+    firmware/wsd
+
+BOARD_ROOT_EXTRA_SYMLINKS := \
+    /vendor/dsp:/dsp \
+    /mnt/vendor/persist:/persist \
+    /data/tombstones:/tombstones
+
 # HIDL
 DEVICE_MANIFEST_FILE := device/htc/hiae/manifest.xml
 DEVICE_MATRIX_FILE := device/htc/hiae/compatibility_matrix.xml
