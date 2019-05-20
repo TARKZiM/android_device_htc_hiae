@@ -61,6 +61,9 @@ debug.hwui.use_buffer_age=false
 # Factory Reset Protection
 ro.frp.pst=/dev/block/platform/soc.0/7824900.sdhci/by-name/frp
 
+# Media
+debug.stagefright.ccodec=0
+
 # NITZ
 persist.rild.nitz_plmn=
 persist.rild.nitz_long_ons_0=
