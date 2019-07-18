@@ -63,6 +63,8 @@ ro.frp.pst=/dev/block/platform/soc.0/7824900.sdhci/by-name/frp
 
 # Media
 debug.stagefright.ccodec=0
+debug.stagefright.omx_default_rank.sw-audio=1
+debug.stagefright.omx_default_rank=0
 
 # NITZ
 persist.rild.nitz_plmn=
