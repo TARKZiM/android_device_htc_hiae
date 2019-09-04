@@ -304,6 +304,10 @@ PRODUCT_PACKAGES += \
 # Shipping API
 $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_m.mk)
 
+# Soong
+PRODUCT_SOONG_NAMESPACES += \
+    device/htc/hiae
+
 # Thermal
 PRODUCT_PACKAGES += \
     android.hardware.thermal@1.0-impl \
