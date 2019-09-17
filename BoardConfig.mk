@@ -17,6 +17,8 @@
 
 BOARD_VENDOR := htc
 
+VENDOR_PATH := device/htc/hiae
+
 TARGET_SPECIFIC_HEADER_PATH := device/htc/hiae/include
 
 # Asserts
@@ -133,7 +135,7 @@ DEVICE_MANIFEST_FILE := device/htc/hiae/manifest.xml
 DEVICE_MATRIX_FILE := device/htc/hiae/compatibility_matrix.xml
 
 # Init
-TARGET_INIT_VENDOR_LIB := libinit_hiae
+TARGET_INIT_VENDOR_LIB := //$(VENDOR_PATH):libinit_hiae
 
 # IPA
 USE_DEVICE_SPECIFIC_DATA_IPA_CFG_MGR := true
