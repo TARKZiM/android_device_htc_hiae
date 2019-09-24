@@ -317,6 +317,10 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_m.mk)
 PRODUCT_SOONG_NAMESPACES += \
     device/htc/hiae
 
+# Thermal HIDL
+PRODUCT_PACKAGES += \
+    android.hardware.thermal@1.1
+
 # Thermal
 PRODUCT_PACKAGES += \
     android.hardware.thermal@1.0-impl \
