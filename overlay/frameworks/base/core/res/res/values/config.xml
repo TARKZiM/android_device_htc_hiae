@@ -274,4 +274,9 @@
 
     <!-- Whether to post reset runnable for all clients -->
     <bool name="config_postResetRunnableForAllClients">true</bool>
+
+    <!-- The list of components which should be automatically disabled for a specific device. -->
+    <string-array name="config_deviceDisabledComponents" translatable="false">
+        <item>com.google.android.gms/com.google.android.gms.nearby.messages.service.NearbyMessagesService</item>
+    </string-array>
 </resources>
