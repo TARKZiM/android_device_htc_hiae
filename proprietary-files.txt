@@ -356,19 +356,13 @@ vendor/lib/libOpenCL.so
 vendor/lib/librs_adreno.so
 
 # GPS
-etc/permissions/com.qti.location.sdk.xml
-etc/permissions/com.qualcomm.location.xml|13d7bb369e3fed83419ec32ee990533d89ff5c78
-etc/permissions/izat.xt.srv.xml
 etc/xtra_root_cert.pem
-framework/izat.xt.srv.jar
-framework/com.qti.location.sdk.jar
 lib64/hw/gps.default.so:vendor/lib64/hw/gps.default.so
 lib64/libgps.utils.so:vendor/lib64/libgps.utils.so
 lib64/libloc_api_v02.so:vendor/lib64/libloc_api_v02.so
 lib64/libloc_core.so:vendor/lib64/libloc_core.so
 lib64/libloc_ds_api.so:vendor/lib64/libloc_ds_api.so
 lib64/libloc_eng.so:vendor/lib64/libloc_eng.so
--priv-app/com.qualcomm.location/com.qualcomm.location.apk
 vendor/lib64/hw/flp.default.so:vendor/lib64/hw/flp.default.so
 vendor/lib64/libalarmservice_jni.so
 vendor/lib64/libdataitems.so
