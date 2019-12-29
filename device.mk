@@ -121,7 +121,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl-hiae \
     libshim_camera \
-    Snap
+    Snap \
+    cameraserver_hiae
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/hdrhax:$(TARGET_COPY_OUT_VENDOR)/etc/hdrhax

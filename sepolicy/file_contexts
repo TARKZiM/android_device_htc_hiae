@@ -68,6 +68,7 @@
 /system/vendor/bin/time_daemon                  u:object_r:time_daemon_exec:s0
 /system/vendor/bin/wcnss_service                u:object_r:wcnss_service_exec:s0
 /system/vendor/bin/wpa_cli                      u:object_r:wcnss_service_exec:s0
+/system/bin/cameraserver_hiae                   u:object_r:cameraserver_exec:s0
 
 ###################################
 # data files

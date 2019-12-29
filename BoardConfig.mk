@@ -104,6 +104,7 @@ BLUETOOTH_HCI_USE_MCT := true
 # Camera
 TARGET_PROCESS_SDK_VERSION_OVERRIDE := \
     /system/bin/cameraserver=24 \
+    /system/bin/cameraserver_hiae=24 \
     /system/vendor/bin/mm-qcamera-daemon=24
 TARGET_SPECIFIC_CAMERA_PARAMETER_LIBRARY := libcamera_parameters_ext_hiae
 USE_DEVICE_SPECIFIC_CAMERA := true
