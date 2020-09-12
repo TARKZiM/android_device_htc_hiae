@@ -32,11 +32,10 @@
 #include <android-base/properties.h>
 #include <android-base/logging.h>
 
-#include "property_service.h"
 #include "vendor_init.h"
 
 using android::base::GetProperty;
-using android::init::property_set;
+using ::android::base::SetProperty;
 
 void property_override(char const prop[], char const value[]) {
     prop_info *pi;
@@ -56,23 +55,23 @@ void property_override_dual(char const system_prop[], char const vendor_prop[],
 }
 
 void cdma_properties(char const default_cdma_sub[], char const default_network[]) {
-    property_set("ril.subscription.types", "NV,RUIM");
-    property_set("ro.ril.enable.sdr", "0");
-    property_set("ro.telephony.default_cdma_sub", default_cdma_sub);
-    property_set("ro.telephony.default_network", default_network);
-    property_set("telephony.lteOnCdmaDevice", "1");
+    SetProperty("ril.subscription.types", "NV,RUIM");
+    SetProperty("ro.ril.enable.sdr", "0");
+    SetProperty("ro.telephony.default_cdma_sub", default_cdma_sub);
+    SetProperty("ro.telephony.default_network", default_network);
+    SetProperty("telephony.lteOnCdmaDevice", "1");
 
-    property_set("ro.cdma.home.operator.numeric", "310120");
-    property_set("ro.cdma.home.operator.alpha", "Sprint");
-    property_set("gsm.sim.operator.alpha", "Sprint");
-    property_set("gsm.sim.operator.numeric", "310120");
-    property_set("gsm.operator.alpha", "Sprint");
-    property_set("gsm.operator.numeric", "310120");
+    SetProperty("ro.cdma.home.operator.numeric", "310120");
+    SetProperty("ro.cdma.home.operator.alpha", "Sprint");
+    SetProperty("gsm.sim.operator.alpha", "Sprint");
+    SetProperty("gsm.sim.operator.numeric", "310120");
+    SetProperty("gsm.operator.alpha", "Sprint");
+    SetProperty("gsm.operator.numeric", "310120");
 }
 
 void gsm_properties(char const default_network[]) {
-    property_set("ro.telephony.default_network", default_network);
-    property_set("telephony.lteOnGsmDevice", "1");
+    SetProperty("ro.telephony.default_network", default_network);
+    SetProperty("telephony.lteOnGsmDevice", "1");
 }
 
 void vendor_load_properties() {
