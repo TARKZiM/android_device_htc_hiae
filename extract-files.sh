@@ -34,6 +34,23 @@ if [ ! -f "$HELPER" ]; then
 fi
 . "$HELPER"
 
+function blob_fixup() {
+    case "${1}" in
+    vendor/lib/mediadrm/libwvdrmengine.so)
+        patchelf --replace-needed "libprotobuf-cpp-lite.so" "libprotobuf-cpp-lite-v28.so" "${2}"
+    ;;
+    vendor/lib64/mediadrm/libwvdrmengine.so)
+        patchelf --replace-needed "libprotobuf-cpp-lite.so" "libprotobuf-cpp-lite-v28.so" "${2}"
+    ;;
+    vendor/lib64/mediadrm/libcneapiclient.so)
+        patchelf --replace-needed "libprotobuf-cpp-lite.so" "libprotobuf-cpp-lite-v28.so" "${2}"
+    ;;
+    vendor/lib64/libsettings.so)
+        patchelf --replace-needed "libprotobuf-cpp-full.so" "libprotobuf-cpp-full-v28.so" "${2}"
+    ;;
+    esac
+}
+
 while [ "$1" != "" ]; do
     case $1 in
         -n | --no-cleanup )     CLEAN_VENDOR=false
