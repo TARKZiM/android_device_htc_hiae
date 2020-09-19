@@ -322,7 +322,8 @@ PRODUCT_PACKAGES += \
     libcnefeatureconfig \
     libhtcril_db \
     librmnetctl \
-    libshim_ril
+    libshim_ril \
+    libaudioclient_shim
 
 # Seccomp
 PRODUCT_COPY_FILES += \

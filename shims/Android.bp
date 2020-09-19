@@ -43,3 +43,16 @@ cc_library_shared {
     proprietary: true,
 
 }
+
+cc_library_shared {
+
+    srcs: ["libaudioclient_shim.cpp"],
+
+    shared_libs: ["libaudioclient"],
+
+    name: "libaudioclient_shim",
+
+    proprietary: true,
+
+}
+
