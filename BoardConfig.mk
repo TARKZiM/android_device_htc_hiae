@@ -149,6 +149,7 @@ BOARD_ROOT_EXTRA_SYMLINKS := \
 # HIDL
 DEVICE_MANIFEST_FILE := device/htc/hiae/manifest.xml
 DEVICE_MATRIX_FILE := device/htc/hiae/compatibility_matrix.xml
+PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := true
 
 # Init
 TARGET_INIT_VENDOR_LIB := //$(VENDOR_PATH):libinit_hiae
