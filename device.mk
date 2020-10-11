@@ -20,8 +20,11 @@ $(call inherit-product-if-exists, vendor/htc/hiae/hiae-vendor.mk)
 
 # Overlays
 DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay
+DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay-lineage
 
 PRODUCT_ENFORCE_RRO_TARGETS := *
+PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS += \
+     $(LOCAL_PATH)/overlay-lineage/lineage-sdk
 
 # Screen density
 PRODUCT_AAPT_CONFIG := normal
