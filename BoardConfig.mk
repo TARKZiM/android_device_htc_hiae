@@ -167,6 +167,9 @@ TARGET_PROVIDES_LIBLIGHT := true
 BOARD_HARDWARE_CLASS += \
     device/htc/hiae/lineagehw
 
+# Memfd
+TARGET_HAS_MEMFD_BACKPORT := true
+
 # NFC
 BOARD_NFC_CHIPSET := pn548
 BOARD_NFC_HAL_SUFFIX := msm8952
