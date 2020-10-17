@@ -13,7 +13,7 @@
 // limitations under the License.
 
 cc_binary {
-    name: "cameraserver_hima",
+    name: "cameraserver_hiae",
 
     srcs: ["main_cameraserver.cpp"],
 
@@ -22,7 +22,7 @@ cc_binary {
     ],
 
     shared_libs: [
-        "libcameraservice_hima",
+        "libcameraservice_hiae",
         "liblog",
         "libutils",
         "libui",
