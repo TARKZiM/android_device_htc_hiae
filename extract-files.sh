@@ -48,6 +48,9 @@ function blob_fixup() {
     vendor/lib64/libsettings.so)
         patchelf --replace-needed "libprotobuf-cpp-full.so" "libprotobuf-cpp-full-v28.so" "${2}"
     ;;
+    vendor/lib/hw/camera.msm8952.so)
+        sed -i "s/service.bootanim.exit/service.bootanim.zzzz/g" "${2}"
+    ;;
     esac
 }
 
