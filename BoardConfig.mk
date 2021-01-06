@@ -160,6 +160,8 @@ BOARD_ROOT_EXTRA_SYMLINKS := \
 
 # HIDL
 DEVICE_MANIFEST_FILE := device/htc/hiae/manifest.xml
+DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := \
+    $(VENDOR_PATH)/device_framework_matrix.xml
 DEVICE_MATRIX_FILE := device/htc/hiae/compatibility_matrix.xml
 PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := true
 
