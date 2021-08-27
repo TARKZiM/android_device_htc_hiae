@@ -2,10 +2,10 @@
 value:2950
 
 [AID_VENDOR_RFS]
-value:3012
+value:2903
 
 [AID_VENDOR_RFS_SHARED]
-value:3013
+value:2904
 
 [firmware/]
 mode: 0771
