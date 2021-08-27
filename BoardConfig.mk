@@ -183,6 +183,7 @@ TARGET_RECOVERY_FSTAB := device/htc/hiae/rootdir/etc/recovery.fstab
 endif
 
 # SELinux
+-include device/qcom/sepolicy-legacy/sepolicy.mk
 BOARD_SEPOLICY_DIRS += device/htc/hiae/sepolicy
 
 # Soong namespaces
