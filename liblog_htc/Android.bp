@@ -21,5 +21,4 @@ cc_library_shared {
 
     name: "liblog_htc",
 
-    vendor: true,
 }
