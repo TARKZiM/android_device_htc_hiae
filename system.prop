@@ -127,3 +127,6 @@ ro.ril.radio.svn=0
 
 # Wifi
 wifi.interface=wlan0
+
+# Vendor security patch level
+ro.lineage.build.vendor_security_patch=2016-12-01
