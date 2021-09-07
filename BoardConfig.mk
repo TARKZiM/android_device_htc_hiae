@@ -139,13 +139,13 @@ TARGET_USERIMAGES_USE_F2FS := true
 
 BOARD_ROOT_EXTRA_FOLDERS := \
     carrier \
+    dsp \
     firmware/adsp \
     firmware/radio \
-    firmware/venus \
+    firmware/wcnss \
     firmware/wsd
 
 BOARD_ROOT_EXTRA_SYMLINKS := \
-    /vendor/dsp:/dsp \
     /mnt/vendor/persist:/persist \
     /data/tombstones:/tombstones
 

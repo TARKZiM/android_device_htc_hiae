@@ -39,8 +39,6 @@ on early-init
     setprop ro.wcnss.serialno ${ro.boot.serialno}
 
 on init
-    # Set permissions for persist partition
-    mkdir /mnt/vendor/persist 0771 root system
 
     symlink /sdcard /storage/sdcard0
 
@@ -60,9 +58,11 @@ on post-fs-data
     mkdir /tombstones/wcnss 0771 system system
     mkdir /tombstones/dsps 0771 system system
 
-    mkdir /persist/data/sfs 0700 system system
-    mkdir /persist/data/tz 0700 system system
-    mkdir /persist/tee 0700 system system
+    mkdir /mnt/vendor/persist 0771 system system
+
+    mkdir /mnt/vendor/persist/data/sfs 0700 system system
+    mkdir /mnt/vendor/persist/data/tz 0700 system system
+    mkdir /mnt/vendor/persist/tee 0700 system system
 
     mkdir /dev/radio 0770 radio radio
 
@@ -88,7 +88,7 @@ on post-fs-data
 
     # Create directory for display
     mkdir /data/misc/display 0770 system graphics
-    mkdir /persist/display 0770 system graphics
+    mkdir /mnt/vendor/persist/display 0770 system graphics
 
     # Create directory for DPM
     mkdir /data/dpm 0771 system system
