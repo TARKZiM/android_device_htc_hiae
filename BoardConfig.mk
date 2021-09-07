@@ -92,8 +92,8 @@ TARGET_LD_SHIM_LIBS := /system/vendor/lib/libBeautyChat.so|/system/vendor/lib/li
     /system/lib64/libpower.so|/system/vendor/lib64/libshim_power.so \
     /system/vendor/lib64/libril.so|/system/vendor/lib64/libshim_ril.so \
     /system/vendor/lib64/libril-qc-qmi-1.so|libaudioclient_shim.so \
-    /system/lib/liblog.so|liblog_htc.so \
-    /system/lib64/liblog.so|liblog_htc.so
+    /system/lib/liblog.so|/system/lib/liblog_htc.so \
+    /system/lib64/liblog.so|/system/lib64/liblog_htc.so
 
 # Bluetooth
 BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/htc/hiae/bluetooth
