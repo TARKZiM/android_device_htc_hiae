@@ -5,7 +5,12 @@ cc_library_shared {
 
     srcs: ["camera_shim.cpp"],
 
-    shared_libs: ["libui"],
+    shared_libs: [
+        "libbinder",
+        "libgui",
+        "libui",
+        "libutils",
+    ],
 
     name: "libshim_camera",
 
