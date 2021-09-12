@@ -22,7 +22,7 @@ VENDOR_PATH := device/htc/hiae
 TARGET_SPECIFIC_HEADER_PATH := device/htc/hiae/include
 
 # Asserts
-TARGET_OTA_ASSERT_DEVICE := htc_hiaeul,htc_hiaeuhl,htc_hiaewhl,,hiaeul,hiaeuhl,htc_hiaewhl,hiae
+TARGET_OTA_ASSERT_DEVICE := htc_hiaeul,htc_hiaeuhl,htc_hiaewhl,htc_tuhl,hiaeul,hiaeuhl,htc_hiaewhl,hiaetuhl,hiae
 
 # Architecture
 TARGET_ARCH := arm64
