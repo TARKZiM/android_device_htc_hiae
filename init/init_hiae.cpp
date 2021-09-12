@@ -83,14 +83,14 @@ void vendor_load_properties() {
     if (bootmid == "2PQ910000") {
         /* hiaeuhl */
         gsm_properties("9");
-        property_override("ro.build.description", "1.10.401.7 CL635503 release-keys");
-        property_override_triple("ro.build.fingerprint", "ro.system.build.fingerprint", "ro.vendor.build.fingerprint", "htc/hiaeuhl_00401/htc_hiaeuhl:6.0/MRA58K/635503.7:user/release-keys");
-        property_override("ro.build.changelist", "635503");
+        property_override("ro.build.description", "2.16.709.3 8.0_g CL853511 release-keys");
+        property_override_triple("ro.build.fingerprint", "ro.system.build.fingerprint", "ro.vendor.build.fingerprint", "htc/hiaeuhl_00709/htc_hiaeuhl:7.0/NRD90M/853511.3:user/release-keys");
+        property_override("ro.build.changelist", "853511");
         property_override("ro.build.product", "htc_hiaeuhl");
         property_override("ro.build.sense.version", "8.0");
         property_override_triple("ro.product.device", "ro.product.system.device", "ro.vendor.product.device", "htc_hiaeuhl");
         property_override_triple("ro.product.model", "ro.product.system.model", "ro.vendor.product.model", "HTC One A9");
-        property_override_triple("ro.product.name", "ro.product.system.name", "ro.vendor.product.name", "hiaeul_00401");
+        property_override_triple("ro.product.name", "ro.product.system.name", "ro.vendor.product.name", "hiaeul_00709");
     } else if (bootmid == "2PQ912000") {
         /* hiaeul */
         gsm_properties("9");
@@ -105,9 +105,9 @@ void vendor_load_properties() {
     } else if (bootmid == "2PQ930000") {
         /* hiaewhl */
         cdma_properties("1", "8");
-        property_override("ro.build.description", "1.57.651.1 CL688951 release-keys");
-        property_override_triple("ro.build.fingerprint", "ro.system.build.fingerprint", "ro.vendor.build.fingerprint", "htc/hiaewhl_00651/htc_hiaewhl:6.0.1/MMB29M/688951.1:user/release-keys");
-        property_override("ro.build.changelist", "688951");
+        property_override("ro.build.description", "2.18.651.2 8.0_g CL861755 release-keys");
+        property_override_triple("ro.build.fingerprint", "ro.system.build.fingerprint", "ro.vendor.build.fingerprint", "htc/hiaewhl_00651/htc_hiaewhl:7.0/NRD90M/861755.2:user/release-keys");
+        property_override("ro.build.changelist", "861755");
         property_override("ro.build.product", "htc_hiaewhl");
         property_override("ro.build.sense.version", "8.0");
         property_override_triple("ro.product.device", "ro.product.system.device", "ro.vendor.product.device", "htc_hiaewhl");
