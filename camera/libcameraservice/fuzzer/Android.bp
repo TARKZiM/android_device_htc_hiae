@@ -15,24 +15,24 @@
 package {
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
-    // all of the 'license_kinds' from "frameworks_av_services_camera_libcameraservice_license"
+    // all of the 'license_kinds' from "frameworks_av_services_camera_libcameraservice_license_hiae"
     // to get the below license kinds:
     //   SPDX-license-identifier-Apache-2.0
     default_applicable_licenses: [
-        "frameworks_av_services_camera_libcameraservice_license",
+        "frameworks_av_services_camera_libcameraservice_license_hiae",
     ],
 }
 
 cc_defaults {
-    name: "libcameraservice_fuzz_defaults",
+    name: "libcameraservice_fuzz_defaults_hiae",
     fuzz_config: {
         componentid: 41727
     },
 }
 
 cc_fuzz {
-    name: "libcameraservice_distortion_mapper_fuzzer",
-    defaults: ["libcameraservice_fuzz_defaults"],
+    name: "libcameraservice_distortion_mapper_fuzzer_hiae",
+    defaults: ["libcameraservice_fuzz_defaults_hiae"],
     srcs: [
         "DistortionMapperFuzzer.cpp",
     ],
@@ -43,8 +43,8 @@ cc_fuzz {
 }
 
 cc_fuzz {
-    name: "libcameraservice_depth_processor_fuzzer",
-    defaults: ["libcameraservice_fuzz_defaults"],
+    name: "libcameraservice_depth_processor_fuzzer_hiae",
+    defaults: ["libcameraservice_fuzz_defaults_hiae"],
     srcs: [
         "DepthProcessorFuzzer.cpp",
     ],
