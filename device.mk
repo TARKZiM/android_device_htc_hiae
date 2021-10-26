@@ -121,6 +121,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl-hiae \
     libshim_camera \
+    libshim_sensor \
     Snap \
     cameraserver_hiae
 

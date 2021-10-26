@@ -61,3 +61,17 @@ cc_library_shared {
 
 }
 
+cc_library_shared {
+
+    srcs: ["sensor.cpp"],
+
+    shared_libs: [
+	"libsensor",
+	"libutils"
+    ],
+
+    name: "libshim_sensor",
+
+    proprietary: true,
+
+}
