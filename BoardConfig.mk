@@ -44,6 +44,7 @@ TARGET_BOARD_PLATFORM_GPU := qcom-adreno405
 TARGET_USES_64_BIT_BINDER := true
 BUILD_BROKEN_DUP_RULES := true
 BUILD_BROKEN_USES_BUILD_COPY_HEADERS := true
+BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 
 # Bootloader
 TARGET_BOOTLOADER_BOARD_NAME := MSM8952
@@ -195,8 +196,9 @@ TARGET_RECOVERY_FSTAB := device/htc/hiae/rootdir/etc/recovery.fstab
 endif
 
 # SELinux
--include device/qcom/sepolicy-legacy/sepolicy.mk
+#-include device/qcom/sepolicy-legacy/sepolicy.mk
 BOARD_SEPOLICY_DIRS += device/htc/hiae/sepolicy-minimal
+SELINUX_IGNORE_NEVERALLOWS := true
 
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
