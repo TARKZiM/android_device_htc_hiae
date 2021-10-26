@@ -100,8 +100,8 @@ persist.media.treble_omx=false
 ro.vendor.extension_library=libqti-perfd-client.so
 
 # Radio
-rild.libargs=-d /dev/smd0
-rild.libpath=/system/vendor/lib64/libhtc_rilhook.so
+vendor.rild.libargs=-d /dev/smd0
+vendor.rild.libpath=/system/vendor/lib64/libhtc_rilhook.so
 rild.vendor.libpath=/system/vendor/lib64/libril-qc-qmi-1.so
 ro.baseband.arch=msm
 ro.ril.telephony.mqanelements=5
