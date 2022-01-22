@@ -417,6 +417,46 @@ status_t CameraProviderManager::openSession(const std::string &id,
     return mapToStatusT(status);
 }
 
+status_t CameraProviderManager::openSession(const std::string &id,
+        const sp<device::V1_0::ICameraDeviceCallback>& callback,
+        /*out*/
+        sp<device::V1_0::ICameraDevice> *session) {
+
+    std::lock_guard<std::mutex> lock(mInterfaceMutex);
+
+    auto deviceInfo = findDeviceInfoLocked(id,
+            /*minVersion*/ {1,0}, /*maxVersion*/ {2,0});
+    if (deviceInfo == nullptr) return NAME_NOT_FOUND;
+
+    auto *deviceInfo1 = static_cast<ProviderInfo::DeviceInfo1*>(deviceInfo);
+    sp<ProviderInfo> parentProvider = deviceInfo->mParentProvider.promote();
+    if (parentProvider == nullptr) {
+        return DEAD_OBJECT;
+    }
+    const sp<provider::V2_4::ICameraProvider> provider = parentProvider->startProviderInterface();
+    if (provider == nullptr) {
+        return DEAD_OBJECT;
+    }
+    saveRef(DeviceMode::CAMERA, id, provider);
+
+    auto interface = deviceInfo1->startDeviceInterface<
+            CameraProviderManager::ProviderInfo::DeviceInfo1::InterfaceT>();
+    if (interface == nullptr) {
+        return DEAD_OBJECT;
+    }
+    hardware::Return<Status> status = interface->open(callback);
+    if (!status.isOk()) {
+        removeRef(DeviceMode::CAMERA, id);
+        ALOGE("%s: Transaction error opening a session for camera device %s: %s",
+                __FUNCTION__, id.c_str(), status.description().c_str());
+        return DEAD_OBJECT;
+    }
+    if (status == Status::OK) {
+        *session = interface;
+    }
+    return mapToStatusT(status);
+}
+
 void CameraProviderManager::saveRef(DeviceMode usageType, const std::string &cameraId,
         sp<provider::V2_4::ICameraProvider> provider) {
     if (!kEnableLazyHal) {
@@ -1393,6 +1433,20 @@ status_t CameraProviderManager::ProviderInfo::initialize(
         }
     }
 
+    // cameraDeviceStatusChange callbacks may be called (and causing new devices added)
+    // before setCallback returns
+    hardware::Return<Status> status = interface->setCallback(this);
+    if (!status.isOk()) {
+        ALOGE("%s: Transaction error setting up callbacks with camera provider '%s': %s",
+                __FUNCTION__, mProviderName.c_str(), status.description().c_str());
+        return DEAD_OBJECT;
+    }
+    if (status != Status::OK) {
+        ALOGE("%s: Unable to register callbacks with camera provider '%s'",
+                __FUNCTION__, mProviderName.c_str());
+        return mapToStatusT(status);
+    }
+
     hardware::Return<bool> linked = interface->linkToDeath(this, /*cookie*/ mId);
     if (!linked.isOk()) {
         ALOGE("%s: Transaction error in linking to camera provider '%s' death: %s",
@@ -1421,7 +1475,6 @@ status_t CameraProviderManager::ProviderInfo::initialize(
         return res;
     }
 
-    Status status;
     // Get initial list of camera devices, if any
     std::vector<std::string> devices;
     hardware::Return<void> ret = interface->getCameraIdList([&status, this, &devices](
@@ -1486,26 +1539,43 @@ status_t CameraProviderManager::ProviderInfo::initialize(
         }
     }
 
-    // cameraDeviceStatusChange callbacks may be called (and causing new devices added)
-    // before setCallback returns. setCallback must be called after addDevice so that
-    // the physical camera status callback can look up available regular
-    // cameras.
-    hardware::Return<Status> st = interface->setCallback(this);
-    if (!st.isOk()) {
-        ALOGE("%s: Transaction error setting up callbacks with camera provider '%s': %s",
-                __FUNCTION__, mProviderName.c_str(), st.description().c_str());
-        return DEAD_OBJECT;
-    }
-    if (st != Status::OK) {
-        ALOGE("%s: Unable to register callbacks with camera provider '%s'",
-                __FUNCTION__, mProviderName.c_str());
-        return mapToStatusT(st);
-    }
-
     ALOGI("Camera provider %s ready with %zu camera devices",
             mProviderName.c_str(), mDevices.size());
 
-    mInitialized = true;
+    // Process cached status callbacks
+    std::unique_ptr<std::vector<CameraStatusInfoT>> cachedStatus =
+            std::make_unique<std::vector<CameraStatusInfoT>>();
+    {
+        std::lock_guard<std::mutex> lock(mInitLock);
+
+        for (auto& statusInfo : mCachedStatus) {
+            std::string id, physicalId;
+            status_t res = OK;
+            if (statusInfo.isPhysicalCameraStatus) {
+                res = physicalCameraDeviceStatusChangeLocked(&id, &physicalId,
+                    statusInfo.cameraId, statusInfo.physicalCameraId, statusInfo.status);
+            } else {
+                res = cameraDeviceStatusChangeLocked(&id, statusInfo.cameraId, statusInfo.status);
+            }
+            if (res == OK) {
+                cachedStatus->emplace_back(statusInfo.isPhysicalCameraStatus,
+                        id.c_str(), physicalId.c_str(), statusInfo.status);
+            }
+        }
+        mCachedStatus.clear();
+
+        mInitialized = true;
+    }
+
+    // The cached status change callbacks cannot be fired directly from this
+    // function, due to same-thread deadlock trying to acquire mInterfaceMutex
+    // twice.
+    if (listener != nullptr) {
+        mInitialStatusCallbackFuture = std::async(std::launch::async,
+                &CameraProviderManager::ProviderInfo::notifyInitialStatusChange, this,
+                listener, std::move(cachedStatus));
+    }
+
     return OK;
 }
 
@@ -1586,9 +1656,9 @@ status_t CameraProviderManager::ProviderInfo::addDevice(const std::string& name,
     std::unique_ptr<DeviceInfo> deviceInfo;
     switch (major) {
         case 1:
-            ALOGE("%s: Device %s: Unsupported HIDL device HAL major version %d:", __FUNCTION__,
-                    name.c_str(), major);
-            return BAD_VALUE;
+            deviceInfo = initializeDeviceInfo<DeviceInfo1>(name, mProviderTagid,
+                    id, minor);
+            break;
         case 3:
             deviceInfo = initializeDeviceInfo<DeviceInfo3>(name, mProviderTagid,
                     id, minor);
@@ -1783,47 +1853,63 @@ hardware::Return<void> CameraProviderManager::ProviderInfo::cameraDeviceStatusCh
         CameraDeviceStatus newStatus) {
     sp<StatusListener> listener;
     std::string id;
-    bool initialized = false;
+    std::lock_guard<std::mutex> lock(mInitLock);
+
+    if (!mInitialized) {
+        mCachedStatus.emplace_back(false /*isPhysicalCameraStatus*/,
+                cameraDeviceName.c_str(), std::string().c_str(), newStatus);
+        return hardware::Void();
+    }
+
     {
         std::lock_guard<std::mutex> lock(mLock);
-        bool known = false;
-        for (auto& deviceInfo : mDevices) {
-            if (deviceInfo->mName == cameraDeviceName) {
-                ALOGI("Camera device %s status is now %s, was %s", cameraDeviceName.c_str(),
-                        deviceStatusToString(newStatus), deviceStatusToString(deviceInfo->mStatus));
-                deviceInfo->mStatus = newStatus;
-                // TODO: Handle device removal (NOT_PRESENT)
-                id = deviceInfo->mId;
-                known = true;
-                break;
-            }
-        }
-        // Previously unseen device; status must not be NOT_PRESENT
-        if (!known) {
-            if (newStatus == CameraDeviceStatus::NOT_PRESENT) {
-                ALOGW("Camera provider %s says an unknown camera device %s is not present. Curious.",
-                    mProviderName.c_str(), cameraDeviceName.c_str());
-                return hardware::Void();
-            }
-            addDevice(cameraDeviceName, newStatus, &id);
-        } else if (newStatus == CameraDeviceStatus::NOT_PRESENT) {
-            removeDevice(id);
+        if (OK != cameraDeviceStatusChangeLocked(&id, cameraDeviceName, newStatus)) {
+            return hardware::Void();
         }
         listener = mManager->getStatusListener();
-        initialized = mInitialized;
-        if (reCacheConcurrentStreamingCameraIdsLocked() != OK) {
-            ALOGE("%s: CameraProvider %s could not re-cache concurrent streaming camera id list ",
-                      __FUNCTION__, mProviderName.c_str());
-        }
     }
+
     // Call without lock held to allow reentrancy into provider manager
-    // Don't send the callback if providerInfo hasn't been initialized.
-    // CameraService will initialize device status after provider is
-    // initialized
-    if (listener != nullptr && initialized) {
+    if (listener != nullptr) {
         listener->onDeviceStatusChanged(String8(id.c_str()), newStatus);
     }
+
     return hardware::Void();
+}
+
+status_t CameraProviderManager::ProviderInfo::cameraDeviceStatusChangeLocked(
+        std::string* id, const hardware::hidl_string& cameraDeviceName,
+        CameraDeviceStatus newStatus) {
+    bool known = false;
+    std::string cameraId;
+    for (auto& deviceInfo : mDevices) {
+        if (deviceInfo->mName == cameraDeviceName) {
+            ALOGI("Camera device %s status is now %s, was %s", cameraDeviceName.c_str(),
+                    deviceStatusToString(newStatus), deviceStatusToString(deviceInfo->mStatus));
+            deviceInfo->mStatus = newStatus;
+            // TODO: Handle device removal (NOT_PRESENT)
+            cameraId = deviceInfo->mId;
+            known = true;
+            break;
+        }
+    }
+    // Previously unseen device; status must not be NOT_PRESENT
+    if (!known) {
+        if (newStatus == CameraDeviceStatus::NOT_PRESENT) {
+            ALOGW("Camera provider %s says an unknown camera device %s is not present. Curious.",
+                mProviderName.c_str(), cameraDeviceName.c_str());
+            return BAD_VALUE;
+        }
+        addDevice(cameraDeviceName, newStatus, &cameraId);
+    } else if (newStatus == CameraDeviceStatus::NOT_PRESENT) {
+        removeDevice(cameraId);
+    }
+    if (reCacheConcurrentStreamingCameraIdsLocked() != OK) {
+        ALOGE("%s: CameraProvider %s could not re-cache concurrent streaming camera id list ",
+                  __FUNCTION__, mProviderName.c_str());
+    }
+    *id = cameraId;
+    return OK;
 }
 
 hardware::Return<void> CameraProviderManager::ProviderInfo::physicalCameraDeviceStatusChange(
@@ -1832,53 +1918,72 @@ hardware::Return<void> CameraProviderManager::ProviderInfo::physicalCameraDevice
         CameraDeviceStatus newStatus) {
     sp<StatusListener> listener;
     std::string id;
-    bool initialized = false;
+    std::string physicalId;
+    std::lock_guard<std::mutex> lock(mInitLock);
+
+    if (!mInitialized) {
+        mCachedStatus.emplace_back(true /*isPhysicalCameraStatus*/, cameraDeviceName,
+                physicalCameraDeviceName, newStatus);
+        return hardware::Void();
+    }
+
     {
         std::lock_guard<std::mutex> lock(mLock);
-        bool known = false;
-        for (auto& deviceInfo : mDevices) {
-            if (deviceInfo->mName == cameraDeviceName) {
-                id = deviceInfo->mId;
 
-                if (!deviceInfo->mIsLogicalCamera) {
-                    ALOGE("%s: Invalid combination of camera id %s, physical id %s",
-                            __FUNCTION__, id.c_str(), physicalCameraDeviceName.c_str());
-                    return hardware::Void();
-                }
-                if (std::find(deviceInfo->mPhysicalIds.begin(), deviceInfo->mPhysicalIds.end(),
-                        physicalCameraDeviceName) == deviceInfo->mPhysicalIds.end()) {
-                    ALOGE("%s: Invalid combination of camera id %s, physical id %s",
-                            __FUNCTION__, id.c_str(), physicalCameraDeviceName.c_str());
-                    return hardware::Void();
-                }
-                ALOGI("Camera device %s physical device %s status is now %s, was %s",
-                        cameraDeviceName.c_str(), physicalCameraDeviceName.c_str(),
-                        deviceStatusToString(newStatus), deviceStatusToString(
-                        deviceInfo->mPhysicalStatus[physicalCameraDeviceName]));
-                known = true;
-                break;
-            }
-        }
-        // Previously unseen device; status must not be NOT_PRESENT
-        if (!known) {
-            ALOGW("Camera provider %s says an unknown camera device %s-%s is not present. Curious.",
-                    mProviderName.c_str(), cameraDeviceName.c_str(),
-                    physicalCameraDeviceName.c_str());
+        if (OK != physicalCameraDeviceStatusChangeLocked(&id, &physicalId, cameraDeviceName,
+                physicalCameraDeviceName, newStatus)) {
             return hardware::Void();
         }
+
         listener = mManager->getStatusListener();
-        initialized = mInitialized;
     }
     // Call without lock held to allow reentrancy into provider manager
-    // Don't send the callback if providerInfo hasn't been initialized.
-    // CameraService will initialize device status after provider is
-    // initialized
-    if (listener != nullptr && initialized) {
-        String8 physicalId(physicalCameraDeviceName.c_str());
+    if (listener != nullptr) {
         listener->onDeviceStatusChanged(String8(id.c_str()),
-                physicalId, newStatus);
+                String8(physicalId.c_str()), newStatus);
     }
     return hardware::Void();
+}
+
+status_t CameraProviderManager::ProviderInfo::physicalCameraDeviceStatusChangeLocked(
+            std::string* id, std::string* physicalId,
+            const hardware::hidl_string& cameraDeviceName,
+            const hardware::hidl_string& physicalCameraDeviceName,
+            CameraDeviceStatus newStatus) {
+    bool known = false;
+    std::string cameraId;
+    for (auto& deviceInfo : mDevices) {
+        if (deviceInfo->mName == cameraDeviceName) {
+            cameraId = deviceInfo->mId;
+            if (!deviceInfo->mIsLogicalCamera) {
+                ALOGE("%s: Invalid combination of camera id %s, physical id %s",
+                        __FUNCTION__, cameraId.c_str(), physicalCameraDeviceName.c_str());
+                return BAD_VALUE;
+            }
+            if (std::find(deviceInfo->mPhysicalIds.begin(), deviceInfo->mPhysicalIds.end(),
+                    physicalCameraDeviceName) == deviceInfo->mPhysicalIds.end()) {
+                ALOGE("%s: Invalid combination of camera id %s, physical id %s",
+                        __FUNCTION__, cameraId.c_str(), physicalCameraDeviceName.c_str());
+                return BAD_VALUE;
+            }
+            ALOGI("Camera device %s physical device %s status is now %s",
+                    cameraDeviceName.c_str(), physicalCameraDeviceName.c_str(),
+                    deviceStatusToString(newStatus));
+            known = true;
+            break;
+        }
+    }
+    // Previously unseen device; status must not be NOT_PRESENT
+    if (!known) {
+        ALOGW("Camera provider %s says an unknown camera device %s-%s is not present. Curious.",
+                mProviderName.c_str(), cameraDeviceName.c_str(),
+                physicalCameraDeviceName.c_str());
+        return BAD_VALUE;
+    }
+
+    *id = cameraId;
+    *physicalId = physicalCameraDeviceName.c_str();
+    return OK;
 }
 
 hardware::Return<void> CameraProviderManager::ProviderInfo::torchModeStatusChange(
@@ -2065,6 +2170,20 @@ status_t CameraProviderManager::ProviderInfo::isConcurrentSessionConfigurationSu
     return INVALID_OPERATION;
 }
 
+void CameraProviderManager::ProviderInfo::notifyInitialStatusChange(
+        sp<StatusListener> listener,
+        std::unique_ptr<std::vector<CameraStatusInfoT>> cachedStatus) {
+    for (auto& statusInfo : *cachedStatus) {
+        if (statusInfo.isPhysicalCameraStatus) {
+            listener->onDeviceStatusChanged(String8(statusInfo.cameraId.c_str()),
+                    String8(statusInfo.physicalCameraId.c_str()), statusInfo.status);
+        } else {
+            listener->onDeviceStatusChanged(
+                    String8(statusInfo.cameraId.c_str()), statusInfo.status);
+        }
+    }
+}
+
 template<class DeviceInfoT>
 std::unique_ptr<CameraProviderManager::ProviderInfo::DeviceInfo>
     CameraProviderManager::ProviderInfo::initializeDeviceInfo(
@@ -2110,6 +2229,35 @@ CameraProviderManager::ProviderInfo::startDeviceInterface(const std::string &nam
     ALOGE("%s: Device %s: Unknown HIDL device HAL major version %d:", __FUNCTION__,
             name.c_str(), InterfaceT::version.get_major());
     return nullptr;
+}
+
+template<>
+sp<device::V1_0::ICameraDevice>
+CameraProviderManager::ProviderInfo::startDeviceInterface
+        <device::V1_0::ICameraDevice>(const std::string &name) {
+    Status status;
+    sp<device::V1_0::ICameraDevice> cameraInterface;
+    hardware::Return<void> ret;
+    const sp<provider::V2_4::ICameraProvider> interface = startProviderInterface();
+    if (interface == nullptr) {
+        return nullptr;
+    }
+    ret = interface->getCameraDeviceInterface_V1_x(name, [&status, &cameraInterface](
+        Status s, sp<device::V1_0::ICameraDevice> interface) {
+                status = s;
+                cameraInterface = interface;
+            });
+    if (!ret.isOk()) {
+        ALOGE("%s: Transaction error trying to obtain interface for camera device %s: %s",
+                __FUNCTION__, name.c_str(), ret.description().c_str());
+        return nullptr;
+    }
+    if (status != Status::OK) {
+        ALOGE("%s: Unable to obtain interface for camera device %s: %s", __FUNCTION__,
+                name.c_str(), statusToString(status));
+        return nullptr;
+    }
+    return cameraInterface;
 }
 
 template<>
@@ -2162,6 +2310,130 @@ template<class InterfaceT>
 status_t CameraProviderManager::ProviderInfo::DeviceInfo::setTorchMode(InterfaceT& interface,
         bool enabled) {
     Status s = interface->setTorchMode(enabled ? TorchMode::ON : TorchMode::OFF);
+    return mapToStatusT(s);
+}
+
+CameraProviderManager::ProviderInfo::DeviceInfo1::DeviceInfo1(const std::string& name,
+        const metadata_vendor_id_t tagId, const std::string &id,
+        uint16_t minorVersion,
+        const CameraResourceCost& resourceCost,
+        sp<ProviderInfo> parentProvider,
+        const std::vector<std::string>& publicCameraIds,
+        sp<InterfaceT> interface) :
+        DeviceInfo(name, tagId, id, hardware::hidl_version{1, minorVersion},
+                   publicCameraIds, resourceCost, parentProvider) {
+    // Get default parameters and initialize flash unit availability
+    // Requires powering on the camera device
+    hardware::Return<Status> status = interface->open(nullptr);
+    if (!status.isOk()) {
+        ALOGE("%s: Transaction error opening camera device %s to check for a flash unit: %s",
+                __FUNCTION__, id.c_str(), status.description().c_str());
+        return;
+    }
+    if (status != Status::OK) {
+        ALOGE("%s: Unable to open camera device %s to check for a flash unit: %s", __FUNCTION__,
+                id.c_str(), CameraProviderManager::statusToString(status));
+        return;
+    }
+    hardware::Return<void> ret;
+    ret = interface->getParameters([this](const hardware::hidl_string& parms) {
+                mDefaultParameters.unflatten(String8(parms.c_str()));
+            });
+    if (!ret.isOk()) {
+        ALOGE("%s: Transaction error reading camera device %s params to check for a flash unit: %s",
+                __FUNCTION__, id.c_str(), status.description().c_str());
+        return;
+    }
+    const char *flashMode =
+            mDefaultParameters.get(CameraParameters::KEY_SUPPORTED_FLASH_MODES);
+    if (flashMode && strstr(flashMode, CameraParameters::FLASH_MODE_TORCH)) {
+        mHasFlashUnit = true;
+    }
+
+    status_t res = cacheCameraInfo(interface);
+    if (res != OK) {
+        ALOGE("%s: Could not cache CameraInfo", __FUNCTION__);
+        return;
+    }
+
+    ret = interface->close();
+    if (!ret.isOk()) {
+        ALOGE("%s: Transaction error closing camera device %s after check for a flash unit: %s",
+                __FUNCTION__, id.c_str(), status.description().c_str());
+    }
+
+    if (!kEnableLazyHal) {
+        // Save HAL reference indefinitely
+        mSavedInterface = interface;
+    }
+}
+
+CameraProviderManager::ProviderInfo::DeviceInfo1::~DeviceInfo1() {}
+
+status_t CameraProviderManager::ProviderInfo::DeviceInfo1::setTorchMode(bool enabled) {
+    return setTorchModeForDevice<InterfaceT>(enabled);
+}
+
+status_t CameraProviderManager::ProviderInfo::DeviceInfo1::filterSmallJpegSizes() {
+    return OK;
+}
+
+status_t CameraProviderManager::ProviderInfo::DeviceInfo1::getCameraInfo(
+        hardware::CameraInfo *info) const {
+    if (info == nullptr) return BAD_VALUE;
+    *info = mInfo;
+    return OK;
+}
+
+status_t CameraProviderManager::ProviderInfo::DeviceInfo1::cacheCameraInfo(
+        sp<CameraProviderManager::ProviderInfo::DeviceInfo1::InterfaceT> interface) {
+    Status status;
+    device::V1_0::CameraInfo cInfo;
+    hardware::Return<void> ret;
+    ret = interface->getCameraInfo([&status, &cInfo](Status s, device::V1_0::CameraInfo camInfo) {
+                status = s;
+                cInfo = camInfo;
+            });
+    if (!ret.isOk()) {
+        ALOGE("%s: Transaction error reading camera info from device %s: %s",
+                __FUNCTION__, mId.c_str(), ret.description().c_str());
+        return DEAD_OBJECT;
+    }
+    if (status != Status::OK) {
+        return mapToStatusT(status);
+    }
+
+    switch(cInfo.facing) {
+        case device::V1_0::CameraFacing::BACK:
+            mInfo.facing = hardware::CAMERA_FACING_BACK;
+            break;
+        case device::V1_0::CameraFacing::EXTERNAL:
+            // Map external to front for legacy API
+        case device::V1_0::CameraFacing::FRONT:
+            mInfo.facing = hardware::CAMERA_FACING_FRONT;
+            break;
+        default:
+            ALOGW("%s: Device %s: Unknown camera facing: %d",
+                    __FUNCTION__, mId.c_str(), cInfo.facing);
+            mInfo.facing = hardware::CAMERA_FACING_BACK;
+    }
+    mInfo.orientation = cInfo.orientation;
+
+    return OK;
+}
+
+status_t CameraProviderManager::ProviderInfo::DeviceInfo1::dumpState(int fd) {
+    native_handle_t* handle = native_handle_create(1,0);
+    handle->data[0] = fd;
+    const sp<InterfaceT> interface = startDeviceInterface<InterfaceT>();
+    if (interface == nullptr) {
+        return DEAD_OBJECT;
+    }
+    hardware::Return<Status> s = interface->dumpState(handle);
+    native_handle_delete(handle);
+    if (!s.isOk()) {
+        return INVALID_OPERATION;
+    }
     return mapToStatusT(s);
 }
 
@@ -2744,9 +3016,11 @@ status_t CameraProviderManager::ProviderInfo::parseDeviceName(const std::string&
 
 
 CameraProviderManager::ProviderInfo::~ProviderInfo() {
+    if (mInitialStatusCallbackFuture.valid()) {
+        mInitialStatusCallbackFuture.wait();
+    }
     // Destruction of ProviderInfo is only supposed to happen when the respective
     // CameraProvider interface dies, so do not unregister callbacks.
-
 }
 
 status_t CameraProviderManager::mapToStatusT(const Status& s)  {

@@ -23,6 +23,7 @@
 #include <set>
 #include <string>
 #include <mutex>
+#include <future>
 
 #include <camera/camera2/ConcurrentCamera.h>
 #include <camera/CameraParameters2.h>
@@ -282,6 +283,11 @@ public:
             /*out*/
             sp<hardware::camera::device::V3_2::ICameraDeviceSession> *session);
 
+    status_t openSession(const std::string &id,
+            const sp<hardware::camera::device::V1_0::ICameraDeviceCallback>& callback,
+            /*out*/
+            sp<hardware::camera::device::V1_0::ICameraDevice> *session);
+
     /**
      * Save the ICameraProvider while it is being used by a camera or torch client
      */
@@ -414,6 +420,15 @@ private:
                 const hardware::hidl_string& physicalCameraDeviceName,
                 hardware::camera::common::V1_0::CameraDeviceStatus newStatus) override;
 
+        status_t cameraDeviceStatusChangeLocked(
+                std::string* id, const hardware::hidl_string& cameraDeviceName,
+                hardware::camera::common::V1_0::CameraDeviceStatus newStatus);
+        status_t physicalCameraDeviceStatusChangeLocked(
+                std::string* id, std::string* physicalId,
+                const hardware::hidl_string& cameraDeviceName,
+                const hardware::hidl_string& physicalCameraDeviceName,
+                hardware::camera::common::V1_0::CameraDeviceStatus newStatus);
+
         // hidl_death_recipient interface - this locks the parent mInterfaceMutex
         virtual void serviceDied(uint64_t cookie, const wp<hidl::base::V1_0::IBase>& who) override;
 
@@ -455,8 +470,6 @@ private:
             const hardware::camera::common::V1_0::CameraResourceCost mResourceCost;
 
             hardware::camera::common::V1_0::CameraDeviceStatus mStatus;
-            std::map<std::string, hardware::camera::common::V1_0::CameraDeviceStatus>
-                    mPhysicalStatus;
 
             wp<ProviderInfo> mParentProvider;
 
@@ -526,6 +539,28 @@ private:
         // advertised by the provider, and to distinguish against "hidden"
         // physical camera IDs.
         std::vector<std::string> mProviderPublicCameraIds;
+
+        // HALv1-specific camera fields, including the actual device interface
+        struct DeviceInfo1 : public DeviceInfo {
+            typedef hardware::camera::device::V1_0::ICameraDevice InterfaceT;
+
+            virtual status_t setTorchMode(bool enabled) override;
+            virtual status_t filterSmallJpegSizes() override;
+            virtual status_t getCameraInfo(hardware::CameraInfo *info) const override;
+            //In case of Device1Info assume that we are always API1 compatible
+            virtual bool isAPI1Compatible() const override { return true; }
+            virtual status_t dumpState(int fd) override;
+            DeviceInfo1(const std::string& name, const metadata_vendor_id_t tagId,
+                    const std::string &id, uint16_t minorVersion,
+                    const hardware::camera::common::V1_0::CameraResourceCost& resourceCost,
+                    sp<ProviderInfo> parentProvider,
+                    const std::vector<std::string>& publicCameraIds,
+                    sp<InterfaceT> interface);
+            virtual ~DeviceInfo1();
+        private:
+            CameraParameters2 mDefaultParameters;
+            status_t cacheCameraInfo(sp<InterfaceT> interface);
+        };
 
         // HALv3-specific camera fields, including the actual device interface
         struct DeviceInfo3 : public DeviceInfo {
@@ -599,7 +634,27 @@ private:
 
         CameraProviderManager *mManager;
 
+        struct CameraStatusInfoT {
+            bool isPhysicalCameraStatus = false;
+            hardware::hidl_string cameraId;
+            hardware::hidl_string physicalCameraId;
+            hardware::camera::common::V1_0::CameraDeviceStatus status;
+            CameraStatusInfoT(bool isForPhysicalCamera, const hardware::hidl_string& id,
+                    const hardware::hidl_string& physicalId,
+                    hardware::camera::common::V1_0::CameraDeviceStatus s) :
+                    isPhysicalCameraStatus(isForPhysicalCamera), cameraId(id),
+                    physicalCameraId(physicalId), status(s) {}
+        };
+
+        // Lock to synchronize between initialize() and camera status callbacks
+        std::mutex mInitLock;
         bool mInitialized = false;
+        std::vector<CameraStatusInfoT> mCachedStatus;
+        // End of scope for mInitLock
+
+        std::future<void> mInitialStatusCallbackFuture;
+        void notifyInitialStatusChange(sp<StatusListener> listener,
+                std::unique_ptr<std::vector<CameraStatusInfoT>> cachedStatus);
 
         std::vector<std::unordered_set<std::string>> mConcurrentCameraIdCombinations;
 

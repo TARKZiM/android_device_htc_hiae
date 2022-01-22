@@ -297,6 +297,7 @@ class Camera3Device :
 
   private:
     status_t disconnectImpl();
+    static status_t removeFwkOnlyRegionKeys(CameraMetadata *request);
 
     // internal typedefs
     using RequestMetadataQueue = hardware::MessageQueue<uint8_t, hardware::kSynchronizedReadWrite>;
@@ -411,6 +412,8 @@ class Camera3Device :
 
         std::pair<bool, uint64_t> getBufferId(
                 const buffer_handle_t& buf, int streamId) override;
+
+        uint64_t removeOneBufferCache(int streamId, const native_handle_t* handle) override;
 
         status_t popInflightBuffer(int32_t frameNumber, int32_t streamId,
                 /*out*/ buffer_handle_t **buffer) override;
@@ -904,6 +907,7 @@ class Camera3Device :
         }
 
         void signalPipelineDrain(const std::vector<int>& streamIds);
+        void resetPipelineDrain();
 
         status_t switchToOffline(
                 const std::vector<int32_t>& streamsToKeep,
