@@ -300,7 +300,6 @@ service vendor.hciattach /system/vendor/bin/init.hiae.bt.sh
     class late_start
     user bluetooth
     group bluetooth net_bt_admin
-    seclabel u:r:bluetooth_loader:s0
     disabled
     oneshot
 
