@@ -23,6 +23,10 @@ cc_library_shared {
 
     srcs: ["gps_shim.cpp"],
 
+    shared_libs: [
+        "libprocessgroup",
+    ],
+
     name: "libshim_gps",
 
     proprietary: true,

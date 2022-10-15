@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
+#include <processgroup/sched_policy.h>
+
 static const char* process_name = "system_server";
 
 extern "C" const char*
 get_process_name(void) {
   return process_name;
+}
+
+extern "C" int get_sched_policy(int tid, SchedPolicy* policy) {
+    return SP_BACKGROUND;
 }

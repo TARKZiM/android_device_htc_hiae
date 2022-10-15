@@ -91,6 +91,7 @@ USE_XML_AUDIO_POLICY_CONF := 1
 TARGET_LD_SHIM_LIBS := /system/vendor/lib/libBeautyChat.so|/system/vendor/lib/libshim_camera.so \
     /system/vendor/lib/libizat_core.so|/system/vendor/lib/libshim_gps.so \
     /system/vendor/lib64/libizat_core.so|/system/vendor/lib64/libshim_gps.so \
+    /system/vendor/lib64/libgps.utils.so|/system/vendor/lib64/libshim_gps.so \
     /system/lib/libpower.so|/system/vendor/lib/libshim_power.so \
     /system/lib64/libpower.so|/system/vendor/lib64/libshim_power.so \
     /system/vendor/lib64/libril.so|/system/vendor/lib64/libshim_ril.so \
