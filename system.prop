@@ -41,6 +41,7 @@ ro.qualcomm.bluetooth.opp=true
 ro.qualcomm.bluetooth.pbap=true
 ro.qualcomm.bt.hci_transport=smd
 bluetooth.core.le.vendor_capabilities.enabled=false
+bluetooth.le.disable_apcf_extended_features=1
 
 # BPF
 ro.kernel.ebpf.supported=false
