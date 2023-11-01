@@ -51,6 +51,8 @@ function blob_fixup() {
     vendor/lib/hw/camera.msm8952.so)
         sed -i "s/service.bootanim.exit/service.bootanim.zzzz/g" "${2}"
     ;;
+    grep -q libutils-v33.so "${2}" || "${PATCHELF}" --add-needed "libutils-v33.so" "${2}"
+    ;;
     esac
 }
 
