@@ -40,6 +40,7 @@ ro.qualcomm.bluetooth.nap=true
 ro.qualcomm.bluetooth.opp=true
 ro.qualcomm.bluetooth.pbap=true
 ro.qualcomm.bt.hci_transport=smd
+bluetooth.core.le.vendor_capabilities.enabled=false
 
 # BPF
 ro.kernel.ebpf.supported=false
