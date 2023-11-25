@@ -276,6 +276,7 @@ PRODUCT_COPY_FILES += \
 # OMX
 PRODUCT_PACKAGES += \
     libc2dcolorconvert \
+    libminijail:32 \
     libOmxAacEnc \
     libOmxAmrEnc \
     libOmxCore \
