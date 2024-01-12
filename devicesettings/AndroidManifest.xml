@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:tools="http://schemas.android.com/tools"
       package="org.lineageos.settings.device"
       android:sharedUserId="android.uid.system">
 
@@ -8,10 +9,6 @@
 
     <protected-broadcast android:name="org.lineageos.settings.device.FP_HOME" />
 
-    <uses-sdk
-        android:minSdkVersion="26"
-        android:targetSdkVersion="26" />
-
     <application
         android:icon="@mipmap/ic_launcher_settings"
         android:label="@string/device_settings_app_name"
@@ -19,6 +16,11 @@
         android:defaultToDeviceProtectedStorage="true"
         android:directBootAware="true"
         android:persistent="true">
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:replace="android:authorities"/>
 
         <provider
             android:name=".DeviceSettingsSearchIndexablesProvider"
@@ -32,7 +34,8 @@
             </intent-filter>
         </provider>
 
-        <receiver android:name="org.lineageos.settings.device.BootCompletedReceiver">
+        <receiver android:name="org.lineageos.settings.device.BootCompletedReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -47,6 +50,7 @@
         <activity
             android:name=".TouchscreenGestureSettingsActivity"
             android:label="@string/touchscreen_gesture_settings_title"
+            android:exported="true"
             android:theme="@style/Theme.Main">
             <intent-filter>
                 <action android:name="org.lineageos.settings.device.GESTURE_SETTINGS" />
@@ -58,6 +62,7 @@
             android:name=".ButtonSettingsActivity"
             android:label="@string/button_panel_title"
             android:icon="@drawable/ic_settings_additional_buttons"
+            android:exported="true"
             android:theme="@style/Theme.Main">
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
