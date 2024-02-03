@@ -15,6 +15,8 @@ LOCAL_C_INCLUDES := \
 	hardware/libhardware/include \
 	$(call project-path-for,qcom-audio)/hal
 
+LOCAL_HEADER_LIBRARIES := libsystem_headers libaudio_system_headers
+
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
