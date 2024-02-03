@@ -88,7 +88,7 @@ USE_CUSTOM_AUDIO_POLICY := 1
 USE_XML_AUDIO_POLICY_CONF := 1
 
 # Bionic
-TARGET_LD_SHIM_LIBS := /system/vendor/lib/libBeautyChat.so|/system/vendor/lib/libshim_camera.so \
+TARGET_LD_SHIM_LIBS := /system/vendor/lib/libBeautyChat.so|libshim_camera.so \
     /system/vendor/lib/libizat_core.so|/system/vendor/lib/libshim_gps.so \
     /system/vendor/lib64/libizat_core.so|/system/vendor/lib64/libshim_gps.so \
     /system/vendor/lib64/libgps.utils.so|/system/vendor/lib64/libshim_gps.so \
