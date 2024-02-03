@@ -121,7 +121,6 @@ PRODUCT_PACKAGES += \
     libshim_camera \
     libshim_sensor \
     Aperture \
-    cameraserver_hiae
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/hdrhax:$(TARGET_COPY_OUT_VENDOR)/etc/hdrhax
