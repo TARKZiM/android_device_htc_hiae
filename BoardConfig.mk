@@ -102,7 +102,8 @@ TARGET_LD_SHIM_LIBS := /system/vendor/lib/libBeautyChat.so|libshim_camera.so \
     /system/vendor/lib64/libril-qc-qmi-1.so|libaudioclient_shim.so \
     /system/lib/liblog.so|/system/lib/liblog_htc.so \
     /system/lib64/liblog.so|/system/lib64/liblog_htc.so \
-    /system/vendor/lib/hw/camera.msm8952.so|libshim_sensor.so
+    /system/vendor/lib/hw/camera.msm8952.so|libshim_sensor.so \
+    /system/vendor/lib64/libqdutils.so|libdisplayconfig.so
 
 # Bluetooth
 BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/htc/hiae/bluetooth
