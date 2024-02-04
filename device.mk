@@ -91,6 +91,7 @@ PRODUCT_PACKAGES += \
     audio.r_submix.default \
     audio.usb.default \
     audio_amplifier.msm8952 \
+    libaudioroute \
     libaudio-resampler \
     libqcompostprocbundle \
     libqcomvisualizer \
