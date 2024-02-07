@@ -103,7 +103,8 @@ TARGET_LD_SHIM_LIBS := /system/vendor/lib/libBeautyChat.so|libshim_camera.so \
     /system/lib/liblog.so|/system/lib/liblog_htc.so \
     /system/lib64/liblog.so|/system/lib64/liblog_htc.so \
     /system/vendor/lib/hw/camera.msm8952.so|libshim_sensor.so \
-    /system/vendor/lib64/libqdutils.so|libdisplayconfig.so
+    /system/vendor/lib64/libqdutils.so|libdisplayconfig.so \
+    /system/vendor/lib/hw/camera.msm8952.so|libc_mutexdestroy_shim.so
 
 # Bluetooth
 BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/htc/hiae/bluetooth
@@ -114,7 +115,7 @@ BLUETOOTH_HCI_USE_MCT := true
 # Camera
 TARGET_PROCESS_SDK_VERSION_OVERRIDE := \
     /system/bin/cameraserver=24 \
-    /system/bin/cameraserver_hiae=24 \
+    /system/bin/cameraserver_32=24 \
     /system/vendor/bin/mm-qcamera-daemon=24
 TARGET_SPECIFIC_CAMERA_PARAMETER_LIBRARY := libcamera_parameters_ext_hiae
 USE_DEVICE_SPECIFIC_CAMERA := true

@@ -71,6 +71,7 @@ ro.kernel.ebpf.supported=false
 camera.hal1.packagelist=com.skype.raider,com.google.android.talk
 camera.lowpower.record.enable=1
 persist.camera.tuning_spec=htc
+persist.camera.HAL3.enabled=1
 
 # Display
 debug.egl.hw=0

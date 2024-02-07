@@ -125,9 +125,11 @@ PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl-hiae \
     libshim_camera \
     libshim_sensor \
+    libc_mutexdestroy_shim \
     libyuv \
     libexif \
-    Aperture
+    Aperture \
+    cameraserver_32
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/hdrhax:$(TARGET_COPY_OUT_VENDOR)/etc/hdrhax
