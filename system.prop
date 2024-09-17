@@ -39,6 +39,7 @@ ro.qualcomm.bluetooth.nap=true
 ro.qualcomm.bluetooth.opp=true
 ro.qualcomm.bluetooth.pbap=true
 ro.qualcomm.bt.hci_transport=smd
+bluetooth.ble.vnd.included=false
 bluetooth.core.le.vendor_capabilities.enabled=false
 bluetooth.le.disable_apcf_extended_features=1
 bluetooth.device.class_of_device=90,2,12
